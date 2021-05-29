@@ -1,6 +1,7 @@
-DROP TABLE IF EXISTS departments;
-DROP TABLE IF EXISTS roles;
+--  delets tables for testing purposes
 DROP TABLE IF EXISTS employees;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS departments;
 
 -- department table
 CREATE TABLE departments (
