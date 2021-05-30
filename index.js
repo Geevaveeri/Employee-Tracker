@@ -1,6 +1,7 @@
 const inquirer = require("inquirer");
 const cTable = require("console.table");
 const db = require("./db/connection");
+const { eventNames } = require("./db/connection");
 
 // connect js files that hold queries
 // const viewEmployee = require("./lib/employeeQueries");
@@ -29,7 +30,7 @@ async function askQuestions() {
             addDepartmentQuestions();
             break;
         case "Add a role":
-            addRoleQuestions();
+            addRole();
             break;
         case "Update employee role":
             updateEmployeeQuestions();
@@ -56,7 +57,7 @@ async function viewDepartments() {
 };
 
 
-// add a department
+// add a department prompt
 async function addDepartmentQuestions() {
     const departmentName = await inquirer.prompt({
         type: "input",
@@ -66,6 +67,8 @@ async function addDepartmentQuestions() {
         return addDepartment(answer);
     })
 };
+
+// function to create new department
 async function addDepartment(answer) {
     const sql = `INSERT INTO departments (department_name) VALUES (?)`;
     const params = [answer.department_name];
@@ -93,19 +96,45 @@ async function viewRoles() {
         askQuestions();
     });
 }
-
 // add a role
-async function addRole(data) {
+async function addRole() {
+    const departmentInfo = await db.promise().query(`SELECT * FROM departments`);
+    let deptList = departmentInfo[0].map((names) => {
+        return {
+            name: names.department_name,
+            value: names.id
+        }
+    })
+    console.log(deptList);
+    const roleInfo = await inquirer.prompt([
+        {
+            type: "input",
+            name: "title",
+            message: "What is the new role title?"
+        },
+        {
+            type: "input",
+            name: "salary",
+            message: "What is the roles salary?"
+        },
+        {
+            type: "list",
+            name: "department",
+            message: "What department does this role belong to?",
+            choices: deptList
+        }
+    ]);
+    // function to create new role
     const sql = `INSERT INTO roles (title, salary, department_id) VALUES (?,?,?)`;
-    const params = [data.title, data.salary, data.department_id];
+    const params = [roleInfo.title, roleInfo.salary, roleInfo.department];
+    await db.promise().query(sql, params);
+    console.log("===================");
+    console.table(`The position of ${roleInfo.title} had been added!`);
+    console.log("===================");
+    askQuestions();
+};
 
-    db.query(sql, params, (err, result) => {
-        if (err) throw err;
-        console.log("===================");
-        console.table(rows);
-        console.log("===================");
-    });
-}
+
 
 // Employee functions
 
