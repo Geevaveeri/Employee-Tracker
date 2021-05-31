@@ -165,11 +165,11 @@ async function viewEmployee() {
 
 // add an employee
 async function addEmployee() {
-    const managerInfo = await db.promise().query(`SELECT * FROM employees WHERE manager_id;`);
+    const managerInfo = await db.promise().query(`SELECT * FROM employees WHERE manager_id IS NULL;`);
     let managerList = managerInfo[0].map((names) => {
         return {
             name: names.first_name.concat(" ", names.last_name),
-            value: names.manager_id
+            value: names.id
         }
     });
     const rolesInfo = await db.promise().query(`SELECT * FROM roles`);
@@ -179,6 +179,7 @@ async function addEmployee() {
             value: role.id
         }
     });
+    console.log(managerList);
     const newEmployee = await inquirer.prompt([
         {
             type: "input",
@@ -208,6 +209,7 @@ async function addEmployee() {
     // function to create new employee in database
     const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
     const params = [newEmployee.first_name, newEmployee.last_name, newEmployee.role, newEmployee.manager];
+    console.log(newEmployee.manager);
     await db.promise().query(sql, params);
     console.log("========================================================================================");
     console.table(`The employee of ${newEmployee.first_name} ${newEmployee.last_name} has been added!`);
