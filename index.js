@@ -14,7 +14,7 @@ async function askQuestions() {
         type: "list",
         name: "questions",
         message: "Please select an option:",
-        choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Update employee role", "Quit"]
+        choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee", "Update employee role", "Quit"]
     });
     switch (questions) {
         case "View all departments":
@@ -31,6 +31,9 @@ async function askQuestions() {
             break;
         case "Add a role":
             addRole();
+            break;
+        case "Add an employee":
+            addEmployee();
             break;
         case "Update employee role":
             updateEmployeeQuestions();
@@ -105,7 +108,6 @@ async function addRole() {
             value: names.id
         }
     })
-    console.log(deptList);
     const roleInfo = await inquirer.prompt([
         {
             type: "input",
@@ -129,7 +131,7 @@ async function addRole() {
     const params = [roleInfo.title, roleInfo.salary, roleInfo.department];
     await db.promise().query(sql, params);
     console.log("===================");
-    console.table(`The position of ${roleInfo.title} had been added!`);
+    console.table(`The position of ${roleInfo.title} has been added!`);
     console.log("===================");
     askQuestions();
 };
@@ -161,5 +163,103 @@ async function viewEmployee() {
     });
 };
 
-askQuestions();
+// add an employee
+async function addEmployee() {
+    const managerInfo = await db.promise().query(`SELECT * FROM employees WHERE manager_id;`);
+    let managerList = managerInfo[0].map((names) => {
+        return {
+            name: names.first_name.concat(" ", names.last_name),
+            value: names.manager_id
+        }
+    });
+    const rolesInfo = await db.promise().query(`SELECT * FROM roles`);
+    let rolesList = rolesInfo[0].map((role) => {
+        return {
+            name: role.title,
+            value: role.id
+        }
+    });
+    const newEmployee = await inquirer.prompt([
+        {
+            type: "input",
+            name: "first_name",
+            message: "What is the new employees first name?"
+        },
+        {
+            type: "input",
+            name: "last_name",
+            message: "What is the new employees last name?"
+        },
+        {
+            type: "list",
+            name: "role",
+            message: "What role does the new employee have?",
+            choices: rolesList
+        },
+        {
+            type: "list",
+            name: "manager",
+            message: "Who is your new employee's manager?",
+            choices: managerList
+        }
 
+    ]);
+
+    // function to create new employee in database
+    const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
+    const params = [newEmployee.first_name, newEmployee.last_name, newEmployee.role, newEmployee.manager];
+    await db.promise().query(sql, params);
+    console.log("========================================================================================");
+    console.table(`The employee of ${newEmployee.first_name} ${newEmployee.last_name} has been added!`);
+    console.log("========================================================================================");
+    askQuestions();
+};
+
+// Update employee role
+async function updateEmployeeQuestions() {
+    const employeeInfo = await db.promise().query(`SELECT * FROM employees`);
+    let employeeList = employeeInfo[0].map((name) => {
+        return {
+            name: name.first_name.concat(" ", name.last_name),
+            value: name.id
+        }
+    });
+    const rolesInfo = await db.promise().query(`SELECT * FROM roles`);
+    let roleList = rolesInfo[0].map((role) => {
+        return {
+            name: role.title,
+            value: role.id
+        }
+    });
+
+    const { employeeId, roleId } = await inquirer.prompt([
+        {
+            type: "list",
+            name: "employeeId",
+            message: "Which employee would you like to update?",
+            choices: employeeList
+        },
+        {
+            type: "list",
+            name: "roleId",
+            message: "What is their new role?",
+            choices: roleList
+        }
+    ]);
+    const sql = `UPDATE employees SET role_id = ? WHERE id = ?`;
+    const params = [roleId, employeeId];
+    await db.promise().query(sql, params);
+    console.log("===================");
+    console.log("Successfully updated the employee role!");
+    console.log("===================");
+    askQuestions();
+}
+
+function init() {
+    console.log("===================");
+    console.log("Welcome to the Employee Tracker!")
+    console.log("===================");
+    askQuestions();
+}
+
+init()
