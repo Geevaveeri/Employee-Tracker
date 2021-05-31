@@ -18,6 +18,7 @@ Clone the repo onto your machine. Open the terminal in the root directory. Type 
 
 ## Usage
 See tutorial video for how to use the application.
+https://youtu.be/0kZFxrBrucc
 
 ## Contributing
 There is no contribution guidelines.
